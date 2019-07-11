@@ -130,9 +130,16 @@ void get_move(int board[B][B], int player, int *p, int *q)	/* 指し手の入力
 	while (1) {
 		printf("> ");
 		fgets(str, sizeof(str), stdin);
-		*q = str[0] - 'a' + 1;
-		*p = str[1] - '1' + 1;
+		if (str[0] > '8') {
+			*q = str[0] - 'a' + 1;
+			*p = str[1] - '1' + 1;
+		}
+		if(str[0] <= '8') {
+			*q = str[1] - 'a' + 1;
+			*p = str[0] - '1' + 1;
+		}
 		if (is_legal_move(board, player, *p, *q)) return;
+
 	}
 }
 
