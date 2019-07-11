@@ -140,6 +140,8 @@ void get_move(int board[B][B], int player, int *p, int *q)	/* 指し手の入力
 		}
 		if (is_legal_move(board, player, *p, *q)) return;
 
+		printf("次の中から選んでください：");
+
 	}
 }
 
