@@ -15,10 +15,13 @@ int stone[8][8];
 int endFlag = 0;
 int turn = -1; // 手番・・・先手黒
 int coolTimer = 0;
+int tmpblack, tmpwhite;
+int winjudge = 0;
 
 // 関数
 void boardInit();
 void boardPrint();
+void boardPrintAlpha();
 void drawStone();
 void setStone();
 int gameEnd();
@@ -59,6 +62,27 @@ void boardPrint() {
 	DrawBox(5, 220, 75, 340, TEAL, TRUE);
 	DrawString(28, 280, "End", BLACK);
 	
+	// パスボタン
+	DrawBox(5, 350, 75, 470, OLIVE, TRUE);
+	DrawString(25, 410, "PASS", BLACK);
+
+}
+
+void boardPrintAlpha() {
+	int linecount = 0;
+	DrawBox(0, 0, 640, 480, BLACK, TRUE);
+	DrawBox(80, 0, 560, 480, BLUE, TRUE);
+	DrawBox(88, 8, 552, 472, WHITE, FALSE);
+	for (int i = 0; i < 7; i++) {
+		linecount += 58;
+		DrawLine(88, 8 + linecount, 552, 8 + linecount, WHITE);
+		DrawLine(88 + linecount, 8, 88 + linecount, 472, WHITE);
+	}
+
+	// エンドボタン
+	DrawBox(5, 220, 75, 340, TEAL, TRUE);
+	DrawString(28, 280, "End", BLACK);
+
 	// パスボタン
 	DrawBox(5, 350, 75, 470, OLIVE, TRUE);
 	DrawString(25, 410, "PASS", BLACK);
@@ -864,7 +888,7 @@ void Reverse(int myX, int myY) {
 // クリック→配置処理
 void setStone() {
 	int mouseX, mouseY, myX, myY;
-	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)
+	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)		//マウスの左ボタンをクリックしたら
 	{
 		GetMousePoint(&mouseX, &mouseY);
 		if (88 <= mouseX && mouseX <= 552) {
@@ -890,12 +914,13 @@ void setStone() {
 // エンドボタン
 void gameEndBottan() {
 	int mouseX, mouseY;
-	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)
+	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)		//マウスの左ボタンをクリックしたら
 	{
 		GetMousePoint(&mouseX, &mouseY);
 		if (5 <= mouseX && mouseX <= 75) {
 			if (220 <= mouseY && mouseY <= 340) {
 				endFlag = 1;
+				//winjudge = 1;
 			}
 		}
 	}
@@ -904,7 +929,8 @@ void gameEndBottan() {
 // パスボタン
 void passBottan() {
 	int mouseX, mouseY;
-	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0) {
+	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)		//マウスの左ボタンをクリックしたら
+	{
 		GetMousePoint(&mouseX, &mouseY);
 		if (5 <= mouseX && mouseX <= 75) {
 			if (350 <= mouseY && mouseY <= 470) {
@@ -961,6 +987,8 @@ int gameEnd() {
 // 表示設定
 void Display() {
 	int blackcount = 0, whitecount = 0;
+	tmpblack = blackcount;
+	tmpwhite = whitecount;
 	char BLACKBUFF[128] , WHITEBUFF[128];
 
 	for (int i = 0; i < 8; i++) {
@@ -1018,20 +1046,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	DrawBox(0, 0, 640, 480, BLACK, TRUE);
 	DrawTriangle(180, 194, 195, 202, 180, 210, WHITE, TRUE);
 	int count = 0;
-	
+
 	while (1) {
-		
+
 		SetFontSize(24);
 		DrawString(200, 190, "vs 人間", WHITE);
 		DrawString(200, 210, "vs コンピューター", WHITE);
 		DrawString(200, 250, "START →→→ A", WHITE);
 
-		while(CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 0) {
+		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 0) {
 			DrawBox(180, 194, 195, 210, BLACK, TRUE);
 			DrawTriangle(180, 214, 195, 222, 180, 230, WHITE, TRUE);
 			count = 1;
 		}
-		while(CheckHitKey(KEY_INPUT_UP) == 1 && count == 1) {
+		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 1) {
 			DrawBox(180, 214, 195, 230, BLACK, TRUE);
 			DrawTriangle(180, 194, 195, 202, 180, 210, WHITE, TRUE);
 			count = 0;
@@ -1042,34 +1070,112 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 	}
 
-	while (1) {
-		SetFontSize(16);
-		boardInit();
-		while (gameEnd() == 0) {
-			boardPrint();
-			setStone();
-			passBottan();
-			gameEndBottan();
-			Display();
-			drawStone();
+	if (count == 0) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrint();
+				setStone();
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			/*if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}*/
+
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
 			ScreenFlip(); // 裏のスクリーンを表に投射
-			if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
-				return 0;
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
 			}
 		}
-		DrawBox(120, 225, 520, 255, WHITE, TRUE);
-		DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
-		DrawBox(120, 255, 520, 285, WHITE, TRUE);
-		DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
-		ScreenFlip(); // 裏のスクリーンを表に投射
-		WaitKey();
-		if (CheckHitKey(KEY_INPUT_C)) {	// 盤面を初期状態にリセット
+	}
+	else if (count == 1) {
+		while (1) {
+			SetFontSize(16);
 			boardInit();
-		}
-		else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
-			break;
+			while (gameEnd() == 0) {
+				boardPrintAlpha();
+				setStone();
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			/*if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}*/
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
 		}
 	}
+
 	DxLib_End();
 	return 0;
 }
