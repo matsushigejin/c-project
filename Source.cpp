@@ -7,21 +7,38 @@
 #define GREEN	GetColor(0, 128, 0)
 #define RED		GetColor(255, 0, 0)
 #define BLUE	GetColor(0, 0, 255)
+#define YELLOW	GetColor(0, 255, 0)
 #define TEAL	GetColor(0, 128, 128)
 #define OLIVE	GetColor(128, 128, 0)
+#define BUFFSIZE	1024
 
 // グローバル変数
 int stone[8][8];
+int stonelevel[8][8] = {
+	{ 100, -40, 20, 5, 5, 20, -40, 100 },
+	{ -40, -80, -1, -1, -1, -1, -80, -40 },
+	{ 20, -1, 5, 1, 1, 5, -1, 20 },
+	{ 5, -1, 1, 0, 0, 1, -1, 5 },
+	{ 5, -1, 1, 0, 0, 1, -1, 5 },
+	{ 20, -1, 5, 1, 1, 5, -1, 20 },
+	{ -40, -80, -1, -1, -1, -1, -80, -40 },
+	{ 100, -40, 20, 5, 5, 20, -40, 100 }
+};
 int endFlag = 0;
 int turn = -1; // 手番・・・先手黒
 int coolTimer = 0;
 int tmpblack, tmpwhite;
 int winjudge = 0;
+char BLACKBUFF[128], WHITEBUFF[128];
+int count_stone;		//反転する石の個数
 
 // 関数
 void boardInit();
+void boardInitCPU();
 void boardPrint();
-void boardPrintAlpha();
+void boardPrintCPUlv1();
+void boardPrintCPUlv2();
+void boardPrintCPUlv3();
 void drawStone();
 void setStone();
 int gameEnd();
@@ -30,10 +47,27 @@ void gameEndBottan();
 void Display();
 int checkPosStone(int myX, int myY);
 void Reverse(int myX, int myY);
+void FileOutput();
+void CPU1_setStone();
+void CPU2_setStone();
+void CPU3_setStone();
 
 
 // 盤面初期状態
 void boardInit() {
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			stone[i][j] = 0;
+		}
+	}
+	endFlag = 0;
+	stone[3][3] = 1;
+	stone[4][4] = 1;
+	stone[3][4] = -1;
+	stone[4][3] = -1;
+}
+
+void boardInitCPU() {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
 			stone[i][j] = 0;
@@ -68,10 +102,52 @@ void boardPrint() {
 
 }
 
-void boardPrintAlpha() {
+void boardPrintCPUlv1() {
 	int linecount = 0;
 	DrawBox(0, 0, 640, 480, BLACK, TRUE);
 	DrawBox(80, 0, 560, 480, BLUE, TRUE);
+	DrawBox(88, 8, 552, 472, WHITE, FALSE);
+	for (int i = 0; i < 7; i++) {
+		linecount += 58;
+		DrawLine(88, 8 + linecount, 552, 8 + linecount, WHITE);
+		DrawLine(88 + linecount, 8, 88 + linecount, 472, WHITE);
+	}
+
+	// エンドボタン
+	DrawBox(5, 220, 75, 340, TEAL, TRUE);
+	DrawString(28, 280, "End", BLACK);
+
+	// パスボタン
+	DrawBox(5, 350, 75, 470, OLIVE, TRUE);
+	DrawString(25, 410, "PASS", BLACK);
+
+}
+
+void boardPrintCPUlv2() {
+	int linecount = 0;
+	DrawBox(0, 0, 640, 480, BLACK, TRUE);
+	DrawBox(80, 0, 560, 480, YELLOW, TRUE);
+	DrawBox(88, 8, 552, 472, WHITE, FALSE);
+	for (int i = 0; i < 7; i++) {
+		linecount += 58;
+		DrawLine(88, 8 + linecount, 552, 8 + linecount, WHITE);
+		DrawLine(88 + linecount, 8, 88 + linecount, 472, WHITE);
+	}
+
+	// エンドボタン
+	DrawBox(5, 220, 75, 340, TEAL, TRUE);
+	DrawString(28, 280, "End", BLACK);
+
+	// パスボタン
+	DrawBox(5, 350, 75, 470, OLIVE, TRUE);
+	DrawString(25, 410, "PASS", BLACK);
+
+}
+
+void boardPrintCPUlv3() {
+	int linecount = 0;
+	DrawBox(0, 0, 640, 480, BLACK, TRUE);
+	DrawBox(80, 0, 560, 480, RED, TRUE);
 	DrawBox(88, 8, 552, 472, WHITE, FALSE);
 	for (int i = 0; i < 7; i++) {
 		linecount += 58;
@@ -108,6 +184,7 @@ void drawStone() {
 int checkPosStone(int myX, int myY) {
 	int whichplayer = turn;
 	int constantX = 0, constantY = 0;		//定数
+	count_stone = 0;
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
@@ -138,6 +215,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX--, constantY--;
+						count_stone++;
 					}
 					break;
 
@@ -155,6 +233,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX--;
+						count_stone++;
 					}
 					break;
 
@@ -177,6 +256,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX--, constantY++;
+						count_stone++;
 					}
 					break;
 
@@ -194,6 +274,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantY--;
+						count_stone++;
 					}
 					break;
 
@@ -211,6 +292,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantY++;
+						count_stone++;
 					}
 					break;
 
@@ -229,6 +311,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX++, constantY--;
+						count_stone++;
 					}
 					break;
 
@@ -246,6 +329,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX++;
+						count_stone++;
 					}
 					break;
 
@@ -268,6 +352,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX++, constantY++;
+						count_stone++;
 					}
 					break;
 				}
@@ -910,6 +995,31 @@ void setStone() {
 	}
 }
 
+void setStoneCPU() {
+	int mouseX, mouseY, myX, myY;
+	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)		//マウスの左ボタンをクリックしたら
+	{
+		GetMousePoint(&mouseX, &mouseY);
+		if (88 <= mouseX && mouseX <= 552) {
+			if (8 <= mouseY && mouseY <= 472) {
+				myX = (mouseX - 88) / 58;
+				myY = (mouseY - 8) / 58;
+				if (stone[myX][myY] == 0) {
+					if (checkPosStone(myX, myY) == 1) {
+						//stone[myX][myY] = turn;
+						stone[myX][myY] = 1;		//自分は白
+						Reverse(myX, myY);
+						//turn *= -1;
+					}
+					else {
+						DrawString(20, 20, "そこに石は置けません", RED);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 // エンドボタン
 void gameEndBottan() {
@@ -920,7 +1030,7 @@ void gameEndBottan() {
 		if (5 <= mouseX && mouseX <= 75) {
 			if (220 <= mouseY && mouseY <= 340) {
 				endFlag = 1;
-				//winjudge = 1;
+				winjudge = 1;
 			}
 		}
 	}
@@ -945,6 +1055,73 @@ void passBottan() {
 		coolTimer = 0;
 	}
 }
+
+void CPU1_setStone() {		//1番多く取れるところに石を置く
+	int max = 0;
+	int cpuX, cpuY;
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			if (stone[i][j] == 0) {
+				if (checkPosStone(i, j) == 1) {
+					if (max < count_stone || (max == count_stone && GetRand(1) == 0)) {
+						max = count_stone;
+						cpuX = i;
+						cpuY = j;
+					}
+				}
+			}
+		}
+	}
+	stone[cpuX][cpuY] = turn;
+	Reverse(cpuX, cpuY);
+	turn *= -1;
+
+}
+
+void CPU2_setStone() {		//1番少なく取れるところに石を置く
+	int min = 100;
+	int cpuX, cpuY;
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			if (stone[i][j] == 0) {
+				if (checkPosStone(i, j) == 1) {
+					if (min > count_stone || (min == count_stone && GetRand(1) == 0)) {
+						min = count_stone;
+						cpuX = i;
+						cpuY = j;
+					}
+				}
+			}
+		}
+	}
+	stone[cpuX][cpuY] = turn;
+	Reverse(cpuX, cpuY);
+	turn *= -1;
+
+}
+
+void CPU3_setStone() {		//優先度の高いところに置く
+	int tmp = -100;
+	int cpuX, cpuY;
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+			if (stone[i][j] == 0) {
+				if (checkPosStone(i, j) == 1) {
+					if (tmp < stonelevel[i][j] || (tmp == stonelevel[i][j] && GetRand(1) == 0)) {
+						tmp = count_stone;
+						cpuX = i;
+						cpuY = j;
+					}
+				}
+			}
+		}
+	}
+	stone[cpuX][cpuY] = turn;
+	Reverse(cpuX, cpuY);
+	turn *= -1;
+
+}
+
 
 // ゲーム終了処理
 // ゲームが終了していれば1、まだ途中であれば0を返す
@@ -987,9 +1164,7 @@ int gameEnd() {
 // 表示設定
 void Display() {
 	int blackcount = 0, whitecount = 0;
-	tmpblack = blackcount;
-	tmpwhite = whitecount;
-	char BLACKBUFF[128] , WHITEBUFF[128];
+	//char BLACKBUFF[128] , WHITEBUFF[128];
 
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
@@ -1012,9 +1187,73 @@ void Display() {
 
 	sprintf_s(BLACKBUFF, 128, "黒石 :%d", blackcount);
 	sprintf_s(WHITEBUFF, 128, "白石 :%d", whitecount);
+	tmpblack = blackcount;
+	tmpwhite = whitecount;
 
 	DrawString(570, 320, BLACKBUFF, WHITE);
 	DrawString(570, 340, WHITEBUFF, WHITE);
+}
+
+void FileInput(const char* fileName) {
+	FILE* fp;
+	char s[BUFFSIZE];
+
+	char delim[] = ", ";
+	char* ctx;
+	char* ctx2;
+	char* p1;
+
+	int i = 0, j = 0;
+
+	errno_t error;
+	error = fopen_s(&fp, fileName, "r");
+	if (error != 0)
+		fprintf_s(stderr, "failed to open");
+	else {
+		while (fgets(s, BUFFSIZE, fp) != NULL) {
+			p1 = strtok_s(s, delim, &ctx);
+			stonelevel[i][j] = atoi(p1);
+			j++;
+			while (*ctx != NULL) {
+				p1 = strtok_s(NULL, delim, &ctx);
+				stonelevel[i][j] = atoi(p1);
+				j++;
+			}
+			i++;
+			j = 0;
+
+		}
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				printf_s("%d", stonelevel[i][j]);
+			}
+		}
+		fclose(fp);
+	}
+}
+
+void FileOutput() {
+
+	FILE* fp;
+
+	errno_t error;
+	error = fopen_s(&fp, "result.txt", "w");
+	if (error != 0)
+		fprintf_s(stderr, "failed to open");
+	else {
+
+		//txtファイルに表示
+		fprintf(fp, "黒石 : %d\n", tmpblack);
+		fprintf(fp, "白石 : %d\n", tmpwhite);
+		if (tmpblack > tmpwhite) {
+			fputs("黒の勝ち!!!", fp);
+		}
+		else if (tmpblack < tmpwhite) {
+			fputs("白の勝ち!!!", fp);
+		}
+
+		fclose(fp);
+	}
 }
 
 //WinMain
@@ -1044,25 +1283,62 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	DrawBox(0, 0, 640, 480, BLACK, TRUE);
-	DrawTriangle(180, 194, 195, 202, 180, 210, WHITE, TRUE);
+	DrawBox(95, 15, 200, 190, BLUE, FALSE);
 	int count = 0;
 
 	while (1) {
 
+		LoadGraphScreen(100, 20, "taijin.png", TRUE);
+		LoadGraphScreen(350, 20, "cpu.png", TRUE);
+		LoadGraphScreen(100, 250, "cpualpha2.png", TRUE);
+		LoadGraphScreen(350, 250, "cpubeta2.png", TRUE);
 		SetFontSize(24);
-		DrawString(200, 190, "vs 人間", WHITE);
-		DrawString(200, 210, "vs コンピューター", WHITE);
-		DrawString(200, 250, "START →→→ A", WHITE);
 
-		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 0) {
-			DrawBox(180, 194, 195, 210, BLACK, TRUE);
-			DrawTriangle(180, 214, 195, 222, 180, 230, WHITE, TRUE);
+		DrawString(100, 190, "vs 人間", WHITE);
+		DrawString(350, 190, "vs CPU lv1", WHITE);
+		DrawString(100, 420, "vs CPU lv2", WHITE);
+		DrawString(350, 420, "vs CPU lv3", WHITE);
+		DrawString(200, 440, "START →→→ A", WHITE);
+
+		while (CheckHitKey(KEY_INPUT_RIGHT) == 1 && count == 0) {
+			DrawBox(345, 15, 490, 190, BLUE, FALSE);
+			DrawBox(95, 15, 200, 190, BLACK, FALSE);
 			count = 1;
 		}
-		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 1) {
-			DrawBox(180, 214, 195, 230, BLACK, TRUE);
-			DrawTriangle(180, 194, 195, 202, 180, 210, WHITE, TRUE);
+		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 0) {
+			DrawBox(95, 245, 240, 420, BLUE, FALSE);
+			DrawBox(95, 15, 200, 190, BLACK, FALSE);
+			count = 10;
+		}
+		while (CheckHitKey(KEY_INPUT_LEFT) == 1 && count == 1) {
+			DrawBox(95, 15, 200, 190, BLUE, FALSE);
+			DrawBox(345, 15, 490, 190, BLACK, FALSE);
 			count = 0;
+		}
+		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 1) {
+			DrawBox(345, 245, 490, 420, BLUE, FALSE);
+			DrawBox(345, 15, 490, 190, BLACK, FALSE);
+			count = 11;
+		}
+		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 10) {
+			DrawBox(95, 15, 200, 190, BLUE, FALSE);
+			DrawBox(95, 245, 240, 420, BLACK, FALSE);
+			count = 0;
+		}
+		while (CheckHitKey(KEY_INPUT_RIGHT) == 1 && count == 10) {
+			DrawBox(345, 245, 490, 420, BLUE, FALSE);
+			DrawBox(95, 245, 240, 420, BLACK, FALSE);
+			count = 11;
+		}
+		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 11) {
+			DrawBox(345, 15, 490, 190, BLUE, FALSE);
+			DrawBox(345, 245, 490, 420, BLACK, FALSE);
+			count = 1;
+		}
+		while (CheckHitKey(KEY_INPUT_LEFT) == 1 && count == 11) {
+			DrawBox(95, 245, 240, 420, BLUE, FALSE);
+			DrawBox(345, 245, 490, 420, BLACK, FALSE);
+			count = 10;
 		}
 
 		if (CheckHitKey(KEY_INPUT_A) == 1) {
@@ -1086,7 +1362,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					return 0;
 				}
 			}
-			/*if (winjudge == 0) {
+			if (winjudge == 0) {
 				DrawBox(0, 0, 640, 480, BLACK, TRUE);
 				SetFontSize(96);
 				while (1) {
@@ -1106,8 +1382,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						break;
 					}
 				}
-			}*/
-
+			}
+			FileOutput();
 			SetFontSize(16);
 			DrawBox(120, 225, 520, 255, WHITE, TRUE);
 			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
@@ -1128,8 +1404,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			SetFontSize(16);
 			boardInit();
 			while (gameEnd() == 0) {
-				boardPrintAlpha();
-				setStone();
+				boardPrintCPUlv1();
+				if (turn == -1) {
+					setStone();
+				}
+				else if (turn == 1) {
+					for (int i = 0; i < 10000; i++) {
+					}
+					CPU1_setStone();
+				}
 				passBottan();
 				gameEndBottan();
 				Display();
@@ -1139,7 +1422,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					return 0;
 				}
 			}
-			/*if (winjudge == 0) {
+			if (winjudge == 0) {
 				DrawBox(0, 0, 640, 480, BLACK, TRUE);
 				SetFontSize(96);
 				while (1) {
@@ -1149,9 +1432,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						SetFontSize(48);
 						DrawString(20, 200, "SKIP　→→→　A", WHITE);
 					}
-					else {
+					else if (tmpblack > tmpwhite) {
 						SetFontSize(96);
 						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "DRAW!!!", WHITE);
 						SetFontSize(48);
 						DrawString(20, 200, "SKIP　→→→　A", WHITE);
 					}
@@ -1159,7 +1448,140 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 						break;
 					}
 				}
-			}*/
+			}
+			FileOutput();
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
+		}
+	}
+	else if (count == 10) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrintCPUlv2();
+				if (turn == -1) {
+					setStone();
+				}
+				else if (turn == 1) {
+					for (int i = 0; i < 10000; i++) {
+					}
+					CPU2_setStone();
+				}
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else if (tmpblack > tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "DRAW!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}
+			FileOutput();
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
+		}
+	}
+	else if (count == 11) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrintCPUlv3();
+				if (turn == -1) {
+					setStone();
+				}
+				else if (turn == 1) {
+					for (int i = 0; i < 10000; i++) {
+					}
+					CPU3_setStone();
+				}
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else if (tmpblack > tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "DRAW!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}
+			FileOutput();
 			SetFontSize(16);
 			DrawBox(120, 225, 520, 255, WHITE, TRUE);
 			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
