@@ -14,23 +14,23 @@
 
 // グローバル変数
 int stone[8][8];
-int stonelevel[8][8] = {
-	{ 100, -40, 20, 5, 5, 20, -40, 100 },
+int stonelevel[8][8];
+/*	{ 100, -40, 20, 5, 5, 20, -40, 100 },
 	{ -40, -80, -1, -1, -1, -1, -80, -40 },
 	{ 20, -1, 5, 1, 1, 5, -1, 20 },
 	{ 5, -1, 1, 0, 0, 1, -1, 5 },
 	{ 5, -1, 1, 0, 0, 1, -1, 5 },
 	{ 20, -1, 5, 1, 1, 5, -1, 20 },
 	{ -40, -80, -1, -1, -1, -1, -80, -40 },
-	{ 100, -40, 20, 5, 5, 20, -40, 100 }
-};
+	{ 100, -40, 20, 5, 5, 20, -40, 100 }	*/
 int endFlag = 0;
 int turn = -1; // 手番・・・先手黒
 int coolTimer = 0;
 int tmpblack, tmpwhite;
 int winjudge = 0;
-char BLACKBUFF[128], WHITEBUFF[128];
 int count_stone;		//反転する石の個数
+char BLACKBUFF[128], WHITEBUFF[128];
+
 
 // 関数
 void boardInit();
@@ -47,10 +47,374 @@ void gameEndBottan();
 void Display();
 int checkPosStone(int myX, int myY);
 void Reverse(int myX, int myY);
+void FileInput();
 void FileOutput();
 void CPU1_setStone();
 void CPU2_setStone();
 void CPU3_setStone();
+
+void getGurrentDirectory(char *currentDirectory) {
+	GetCurrentDirectory(BUFFSIZE, currentDirectory);
+}
+
+//WinMain
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	ChangeWindowMode(TRUE);
+	if (DxLib_Init() == -1 || SetDrawScreen(DX_SCREEN_BACK) != 0) {	//初期化と裏画面化
+		return -1;
+	}
+	FileInput();
+	/*char currentDirectory[BUFFSIZE];
+	getGurrentDirectory(currentDirectory);
+
+
+	char str[7][BUFFSIZE] = { "endFlag", "turn", "coolTimer", "tmpblack", "tmpwhite", "winjudge", "count_stone" };
+	for (int i = 0; i < 7; i++) {
+		GetPrivateProfileInt("othello1", str[i], -1, "E:\othellodata.ini");
+	}*/
+	
+	
+
+	ChangeWindowMode(TRUE);			// ウィンドウモードで起動する
+	SetGraphMode(640, 480, 16);		// ウィンドウサイズ(640 X 480) 使用カラー16bit(65536色)
+	SetWindowText("othello");		// タイトル名
+	SetMouseDispFlag(TRUE);
+
+	while (1) {
+		LoadGraphScreen(100, 80, "othello.png", TRUE);
+
+		SetFontSize(96);
+		DrawString(20, 80, "Othello Game", WHITE);
+
+		SetFontSize(24);
+		DrawString(200, 400, "START →→→ SPACEKEY", WHITE);
+
+		if (CheckHitKey(KEY_INPUT_SPACE) == 1) {
+			break;
+		}
+	}
+
+	DrawBox(0, 0, 640, 480, BLACK, TRUE);
+	DrawBox(95, 15, 200, 190, BLUE, FALSE);
+	int count = 0;
+
+	while (1) {
+
+		LoadGraphScreen(100, 20, "taijin.png", TRUE);
+		LoadGraphScreen(350, 20, "cpu.png", TRUE);
+		LoadGraphScreen(100, 250, "cpualpha.png", TRUE);
+		LoadGraphScreen(350, 250, "cpubeta.png", TRUE);
+		SetFontSize(24);
+
+		DrawString(100, 190, "vs 人間", WHITE);
+		DrawString(350, 190, "vs CPU lv1", WHITE);
+		DrawString(100, 420, "vs CPU lv2", WHITE);
+		DrawString(350, 420, "vs CPU lv3", WHITE);
+		DrawString(200, 450, "START →→→ A", WHITE);
+
+		while (CheckHitKey(KEY_INPUT_RIGHT) == 1 && count == 0) {
+			DrawBox(345, 15, 490, 190, BLUE, FALSE);
+			DrawBox(95, 15, 200, 190, BLACK, FALSE);
+			count = 1;
+		}
+		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 0) {
+			DrawBox(95, 245, 240, 420, BLUE, FALSE);
+			DrawBox(95, 15, 200, 190, BLACK, FALSE);
+			count = 10;
+		}
+		while (CheckHitKey(KEY_INPUT_LEFT) == 1 && count == 1) {
+			DrawBox(95, 15, 200, 190, BLUE, FALSE);
+			DrawBox(345, 15, 490, 190, BLACK, FALSE);
+			count = 0;
+		}
+		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 1) {
+			DrawBox(345, 245, 490, 420, BLUE, FALSE);
+			DrawBox(345, 15, 490, 190, BLACK, FALSE);
+			count = 11;
+		}
+		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 10) {
+			DrawBox(95, 15, 200, 190, BLUE, FALSE);
+			DrawBox(95, 245, 240, 420, BLACK, FALSE);
+			count = 0;
+		}
+		while (CheckHitKey(KEY_INPUT_RIGHT) == 1 && count == 10) {
+			DrawBox(345, 245, 490, 420, BLUE, FALSE);
+			DrawBox(95, 245, 240, 420, BLACK, FALSE);
+			count = 11;
+		}
+		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 11) {
+			DrawBox(345, 15, 490, 190, BLUE, FALSE);
+			DrawBox(345, 245, 490, 420, BLACK, FALSE);
+			count = 1;
+		}
+		while (CheckHitKey(KEY_INPUT_LEFT) == 1 && count == 11) {
+			DrawBox(95, 245, 240, 420, BLUE, FALSE);
+			DrawBox(345, 245, 490, 420, BLACK, FALSE);
+			count = 10;
+		}
+
+		if (CheckHitKey(KEY_INPUT_A) == 1) {
+			break;
+		}
+	}
+
+	if (count == 0) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrint();
+				setStone();
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}
+			FileOutput();
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+				winjudge = 0;
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
+		}
+	}
+	else if (count == 1) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrintCPUlv1();
+				if (turn == -1) {
+					setStone();
+				}
+				else if (turn == 1) {
+					CPU1_setStone();
+				}
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else if (tmpblack > tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "DRAW!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}
+			FileOutput();
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+				winjudge = 0;
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
+		}
+	}
+	else if (count == 10) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrintCPUlv2();
+				if (turn == -1) {
+					setStone();
+				}
+				else if (turn == 1) {
+					for (int i = 0; i < 10000; i++) {
+					}
+					CPU2_setStone();
+				}
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else if (tmpblack > tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "DRAW!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}
+			FileOutput();
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+				winjudge = 0;
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
+		}
+	}
+	else if (count == 11) {
+		while (1) {
+			SetFontSize(16);
+			boardInit();
+			while (gameEnd() == 0) {
+				boardPrintCPUlv3();
+				if (turn == -1) {
+					setStone();
+				}
+				else if (turn == 1) {
+					for (int i = 0; i < 10000; i++) {
+					}
+					CPU3_setStone();
+				}
+				passBottan();
+				gameEndBottan();
+				Display();
+				drawStone();
+				ScreenFlip(); // 裏のスクリーンを表に投射
+				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
+					return 0;
+				}
+			}
+			if (winjudge == 0) {
+				DrawBox(0, 0, 640, 480, BLACK, TRUE);
+				SetFontSize(96);
+				while (1) {
+					if (tmpblack < tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "白WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else if (tmpblack > tmpwhite) {
+						SetFontSize(96);
+						DrawString(40, 80, "黒WIN!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					else {
+						SetFontSize(96);
+						DrawString(40, 80, "DRAW!!!", WHITE);
+						SetFontSize(48);
+						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+					}
+					if (CheckHitKey(KEY_INPUT_A) == 1) {
+						break;
+					}
+				}
+			}
+			FileOutput();
+			SetFontSize(16);
+			DrawBox(120, 225, 520, 255, WHITE, TRUE);
+			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
+			DrawBox(120, 255, 520, 285, WHITE, TRUE);
+			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
+			ScreenFlip(); // 裏のスクリーンを表に投射
+			WaitKey();
+			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
+				boardInit();
+				winjudge = 0;
+			}
+			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
+				break;
+			}
+		}
+	}
+
+	DxLib_End();
+	return 0;
+}
 
 // 盤面初期状態
 void boardInit() {
@@ -1193,7 +1557,7 @@ void Display() {
 	DrawString(570, 340, WHITEBUFF, WHITE);
 }
 
-void FileInput(const char* fileName) {
+void FileInput() {
 	FILE* fp;
 	char s[BUFFSIZE];
 
@@ -1205,7 +1569,7 @@ void FileInput(const char* fileName) {
 	int i = 0, j = 0;
 
 	errno_t error;
-	error = fopen_s(&fp, fileName, "r");
+	error = fopen_s(&fp, "stoneleveldata.txt", "r");
 	if (error != 0)
 		fprintf_s(stderr, "failed to open");
 	else {
@@ -1255,348 +1619,3 @@ void FileOutput() {
 	}
 }
 
-//WinMain
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	ChangeWindowMode(TRUE);
-	if (DxLib_Init() == -1 || SetDrawScreen(DX_SCREEN_BACK) != 0) {	//初期化と裏画面化
-		return -1;
-	}
-
-	ChangeWindowMode(TRUE);			// ウィンドウモードで起動する
-	SetGraphMode(640, 480, 16);		// ウィンドウサイズ(640 X 480) 使用カラー16bit(65536色)
-	SetWindowText("othello");		// タイトル名
-	SetMouseDispFlag(TRUE);
-
-	while (1) {
-		LoadGraphScreen(100, 80, "othello.png", TRUE);
-
-		SetFontSize(96);
-		DrawString(20, 80, "Othello Game", WHITE);
-
-		SetFontSize(24);
-		DrawString(200, 400, "START →→→ SPACEKEY", WHITE);
-
-		if (CheckHitKey(KEY_INPUT_SPACE) == 1) {
-			break;
-		}
-	}
-
-	DrawBox(0, 0, 640, 480, BLACK, TRUE);
-	DrawBox(95, 15, 200, 190, BLUE, FALSE);
-	int count = 0;
-
-	while (1) {
-
-		LoadGraphScreen(100, 20, "taijin.png", TRUE);
-		LoadGraphScreen(350, 20, "cpu.png", TRUE);
-		LoadGraphScreen(100, 250, "cpualpha2.png", TRUE);
-		LoadGraphScreen(350, 250, "cpubeta2.png", TRUE);
-		SetFontSize(24);
-
-		DrawString(100, 190, "vs 人間", WHITE);
-		DrawString(350, 190, "vs CPU lv1", WHITE);
-		DrawString(100, 420, "vs CPU lv2", WHITE);
-		DrawString(350, 420, "vs CPU lv3", WHITE);
-		DrawString(200, 440, "START →→→ A", WHITE);
-
-		while (CheckHitKey(KEY_INPUT_RIGHT) == 1 && count == 0) {
-			DrawBox(345, 15, 490, 190, BLUE, FALSE);
-			DrawBox(95, 15, 200, 190, BLACK, FALSE);
-			count = 1;
-		}
-		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 0) {
-			DrawBox(95, 245, 240, 420, BLUE, FALSE);
-			DrawBox(95, 15, 200, 190, BLACK, FALSE);
-			count = 10;
-		}
-		while (CheckHitKey(KEY_INPUT_LEFT) == 1 && count == 1) {
-			DrawBox(95, 15, 200, 190, BLUE, FALSE);
-			DrawBox(345, 15, 490, 190, BLACK, FALSE);
-			count = 0;
-		}
-		while (CheckHitKey(KEY_INPUT_DOWN) == 1 && count == 1) {
-			DrawBox(345, 245, 490, 420, BLUE, FALSE);
-			DrawBox(345, 15, 490, 190, BLACK, FALSE);
-			count = 11;
-		}
-		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 10) {
-			DrawBox(95, 15, 200, 190, BLUE, FALSE);
-			DrawBox(95, 245, 240, 420, BLACK, FALSE);
-			count = 0;
-		}
-		while (CheckHitKey(KEY_INPUT_RIGHT) == 1 && count == 10) {
-			DrawBox(345, 245, 490, 420, BLUE, FALSE);
-			DrawBox(95, 245, 240, 420, BLACK, FALSE);
-			count = 11;
-		}
-		while (CheckHitKey(KEY_INPUT_UP) == 1 && count == 11) {
-			DrawBox(345, 15, 490, 190, BLUE, FALSE);
-			DrawBox(345, 245, 490, 420, BLACK, FALSE);
-			count = 1;
-		}
-		while (CheckHitKey(KEY_INPUT_LEFT) == 1 && count == 11) {
-			DrawBox(95, 245, 240, 420, BLUE, FALSE);
-			DrawBox(345, 245, 490, 420, BLACK, FALSE);
-			count = 10;
-		}
-
-		if (CheckHitKey(KEY_INPUT_A) == 1) {
-			break;
-		}
-	}
-
-	if (count == 0) {
-		while (1) {
-			SetFontSize(16);
-			boardInit();
-			while (gameEnd() == 0) {
-				boardPrint();
-				setStone();
-				passBottan();
-				gameEndBottan();
-				Display();
-				drawStone();
-				ScreenFlip(); // 裏のスクリーンを表に投射
-				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
-					return 0;
-				}
-			}
-			if (winjudge == 0) {
-				DrawBox(0, 0, 640, 480, BLACK, TRUE);
-				SetFontSize(96);
-				while (1) {
-					if (tmpblack < tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else {
-						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					if (CheckHitKey(KEY_INPUT_A) == 1) {
-						break;
-					}
-				}
-			}
-			FileOutput();
-			SetFontSize(16);
-			DrawBox(120, 225, 520, 255, WHITE, TRUE);
-			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
-			DrawBox(120, 255, 520, 285, WHITE, TRUE);
-			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
-			ScreenFlip(); // 裏のスクリーンを表に投射
-			WaitKey();
-			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
-				boardInit();
-			}
-			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
-				break;
-			}
-		}
-	}
-	else if (count == 1) {
-		while (1) {
-			SetFontSize(16);
-			boardInit();
-			while (gameEnd() == 0) {
-				boardPrintCPUlv1();
-				if (turn == -1) {
-					setStone();
-				}
-				else if (turn == 1) {
-					for (int i = 0; i < 10000; i++) {
-					}
-					CPU1_setStone();
-				}
-				passBottan();
-				gameEndBottan();
-				Display();
-				drawStone();
-				ScreenFlip(); // 裏のスクリーンを表に投射
-				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
-					return 0;
-				}
-			}
-			if (winjudge == 0) {
-				DrawBox(0, 0, 640, 480, BLACK, TRUE);
-				SetFontSize(96);
-				while (1) {
-					if (tmpblack < tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else if (tmpblack > tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else {
-						SetFontSize(96);
-						DrawString(40, 80, "DRAW!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					if (CheckHitKey(KEY_INPUT_A) == 1) {
-						break;
-					}
-				}
-			}
-			FileOutput();
-			SetFontSize(16);
-			DrawBox(120, 225, 520, 255, WHITE, TRUE);
-			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
-			DrawBox(120, 255, 520, 285, WHITE, TRUE);
-			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
-			ScreenFlip(); // 裏のスクリーンを表に投射
-			WaitKey();
-			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
-				boardInit();
-			}
-			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
-				break;
-			}
-		}
-	}
-	else if (count == 10) {
-		while (1) {
-			SetFontSize(16);
-			boardInit();
-			while (gameEnd() == 0) {
-				boardPrintCPUlv2();
-				if (turn == -1) {
-					setStone();
-				}
-				else if (turn == 1) {
-					for (int i = 0; i < 10000; i++) {
-					}
-					CPU2_setStone();
-				}
-				passBottan();
-				gameEndBottan();
-				Display();
-				drawStone();
-				ScreenFlip(); // 裏のスクリーンを表に投射
-				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
-					return 0;
-				}
-			}
-			if (winjudge == 0) {
-				DrawBox(0, 0, 640, 480, BLACK, TRUE);
-				SetFontSize(96);
-				while (1) {
-					if (tmpblack < tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else if (tmpblack > tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else {
-						SetFontSize(96);
-						DrawString(40, 80, "DRAW!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					if (CheckHitKey(KEY_INPUT_A) == 1) {
-						break;
-					}
-				}
-			}
-			FileOutput();
-			SetFontSize(16);
-			DrawBox(120, 225, 520, 255, WHITE, TRUE);
-			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
-			DrawBox(120, 255, 520, 285, WHITE, TRUE);
-			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
-			ScreenFlip(); // 裏のスクリーンを表に投射
-			WaitKey();
-			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
-				boardInit();
-			}
-			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
-				break;
-			}
-		}
-	}
-	else if (count == 11) {
-		while (1) {
-			SetFontSize(16);
-			boardInit();
-			while (gameEnd() == 0) {
-				boardPrintCPUlv3();
-				if (turn == -1) {
-					setStone();
-				}
-				else if (turn == 1) {
-					for (int i = 0; i < 10000; i++) {
-					}
-					CPU3_setStone();
-				}
-				passBottan();
-				gameEndBottan();
-				Display();
-				drawStone();
-				ScreenFlip(); // 裏のスクリーンを表に投射
-				if (CheckHitKey(KEY_INPUT_ESCAPE) == 1) { // エスケープキーで強制終了
-					return 0;
-				}
-			}
-			if (winjudge == 0) {
-				DrawBox(0, 0, 640, 480, BLACK, TRUE);
-				SetFontSize(96);
-				while (1) {
-					if (tmpblack < tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else if (tmpblack > tmpwhite) {
-						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					else {
-						SetFontSize(96);
-						DrawString(40, 80, "DRAW!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
-					}
-					if (CheckHitKey(KEY_INPUT_A) == 1) {
-						break;
-					}
-				}
-			}
-			FileOutput();
-			SetFontSize(16);
-			DrawBox(120, 225, 520, 255, WHITE, TRUE);
-			DrawString(140, 233, "もう一度対戦する(continue)　→→→　cボタン", BLUE);
-			DrawBox(120, 255, 520, 285, WHITE, TRUE);
-			DrawString(140, 263, "やめる場合(end)　→→→　eボタン", RED);
-			ScreenFlip(); // 裏のスクリーンを表に投射
-			WaitKey();
-			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
-				boardInit();
-			}
-			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
-				break;
-			}
-		}
-	}
-
-	DxLib_End();
-	return 0;
-}
