@@ -7,7 +7,7 @@
 #define GREEN	GetColor(0, 128, 0)
 #define RED		GetColor(255, 0, 0)
 #define BLUE	GetColor(0, 0, 255)
-#define YELLOW	GetColor(0, 255, 0)
+#define YELLOW	GetColor(255, 255, 0)
 #define TEAL	GetColor(0, 128, 128)
 #define OLIVE	GetColor(128, 128, 0)
 #define BUFFSIZE	1024
@@ -51,7 +51,6 @@ void FileOutput();
 void CPU1_setStone();
 void CPU2_setStone();
 void CPU3_setStone();
-
 
 // 盤面初期状態
 void boardInit() {
@@ -127,11 +126,11 @@ void boardPrintCPUlv2() {
 	int linecount = 0;
 	DrawBox(0, 0, 640, 480, BLACK, TRUE);
 	DrawBox(80, 0, 560, 480, YELLOW, TRUE);
-	DrawBox(88, 8, 552, 472, WHITE, FALSE);
+	DrawBox(88, 8, 552, 472, BLACK, FALSE);
 	for (int i = 0; i < 7; i++) {
 		linecount += 58;
-		DrawLine(88, 8 + linecount, 552, 8 + linecount, WHITE);
-		DrawLine(88 + linecount, 8, 88 + linecount, 472, WHITE);
+		DrawLine(88, 8 + linecount, 552, 8 + linecount, BLACK);
+		DrawLine(88 + linecount, 8, 88 + linecount, 472, BLACK);
 	}
 
 	// エンドボタン
