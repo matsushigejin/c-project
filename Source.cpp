@@ -12,25 +12,30 @@
 #define OLIVE	GetColor(128, 128, 0)
 #define BUFFSIZE	1024
 
-// グローバル変数
-int stone[8][8];
-int stonelevel[8][8];
-/*	{ 100, -40, 20, 5, 5, 20, -40, 100 },
-	{ -40, -80, -1, -1, -1, -1, -80, -40 },
-	{ 20, -1, 5, 1, 1, 5, -1, 20 },
-	{ 5, -1, 1, 0, 0, 1, -1, 5 },
-	{ 5, -1, 1, 0, 0, 1, -1, 5 },
-	{ 20, -1, 5, 1, 1, 5, -1, 20 },
-	{ -40, -80, -1, -1, -1, -1, -80, -40 },
-	{ 100, -40, 20, 5, 5, 20, -40, 100 }	*/
-int endFlag = 0;
-int turn = -1; // 手番・・・先手黒
-int coolTimer = 0;
-int tmpblack, tmpwhite;
-int winjudge = 0;
-int count_stone;		//反転する石の個数
-char BLACKBUFF[128], WHITEBUFF[128];
+struct Othello {
+	// グローバル変数
+	int stone[8][8];
+	int stonelevel[8][8];
+	/*	{ 100, -40, 20, 5, 5, 20, -40, 100 },
+		{ -40, -80, -1, -1, -1, -1, -80, -40 },
+		{ 20, -1, 5, 1, 1, 5, -1, 20 },
+		{ 5, -1, 1, 0, 0, 1, -1, 5 },
+		{ 5, -1, 1, 0, 0, 1, -1, 5 },
+		{ 20, -1, 5, 1, 1, 5, -1, 20 },
+		{ -40, -80, -1, -1, -1, -1, -80, -40 },
+		{ 100, -40, 20, 5, 5, 20, -40, 100 }	*/
+	int endFlag;
+	int turn; // 手番・・・先手黒
+	int coolTimer;
+	int tmpblack, tmpwhite;
+	int winjudge;
+	int count_stone;		//反転する石の個数
+	
+};
 
+Othello data;
+
+char BLACKBUFF[128], WHITEBUFF[128];
 
 // 関数
 void boardInit();
@@ -63,17 +68,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (DxLib_Init() == -1 || SetDrawScreen(DX_SCREEN_BACK) != 0) {	//初期化と裏画面化
 		return -1;
 	}
+
 	FileInput();
-	/*char currentDirectory[BUFFSIZE];
+
+	char currentDirectory[BUFFSIZE];
 	getGurrentDirectory(currentDirectory);
 
+	char str[4][BUFFSIZE] = { "endflag", "turn", "cooltimer", "winjudge" };
+	data.endFlag = GetPrivateProfileInt("othello1", str[0], -10, "E:othellodata.ini");
+	data.turn = GetPrivateProfileInt("othello1", str[1], -10, "E:othellodata.ini");
+	data.coolTimer = GetPrivateProfileInt("othello1", str[2], -10, "E:othellodata.ini");
+	data.winjudge = GetPrivateProfileInt("othello1", str[3], -10, "E:othellodata.ini");
 
-	char str[7][BUFFSIZE] = { "endFlag", "turn", "coolTimer", "tmpblack", "tmpwhite", "winjudge", "count_stone" };
-	for (int i = 0; i < 7; i++) {
-		GetPrivateProfileInt("othello1", str[i], -1, "E:\othellodata.ini");
-	}*/
-	
-	
+	char buff[5][BUFFSIZE];
+	char tmpdata[5][BUFFSIZE] = { "p1", "p2", "p3", "p4", "p5" };
+	for (int i = 0; i < 5; i++) {
+		GetPrivateProfileString("picture1", tmpdata[i], "none", buff[i], BUFFSIZE, "E:othellodata.ini");
+	}
 
 	ChangeWindowMode(TRUE);			// ウィンドウモードで起動する
 	SetGraphMode(640, 480, 16);		// ウィンドウサイズ(640 X 480) 使用カラー16bit(65536色)
@@ -81,7 +92,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetMouseDispFlag(TRUE);
 
 	while (1) {
-		LoadGraphScreen(100, 80, "othello.png", TRUE);
+		LoadGraphScreen(100, 80, buff[4], TRUE);
 
 		SetFontSize(96);
 		DrawString(20, 80, "Othello Game", WHITE);
@@ -100,10 +111,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	while (1) {
 
-		LoadGraphScreen(100, 20, "taijin.png", TRUE);
-		LoadGraphScreen(350, 20, "cpu.png", TRUE);
-		LoadGraphScreen(100, 250, "cpualpha.png", TRUE);
-		LoadGraphScreen(350, 250, "cpubeta.png", TRUE);
+		LoadGraphScreen(100, 20, buff[0], TRUE);
+		LoadGraphScreen(350, 20, buff[1], TRUE);
+		LoadGraphScreen(100, 250, buff[2], TRUE);
+		LoadGraphScreen(350, 250, buff[3], TRUE);
 		SetFontSize(24);
 
 		DrawString(100, 190, "vs 人間", WHITE);
@@ -174,21 +185,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					return 0;
 				}
 			}
-			if (winjudge == 0) {
+			if (data.winjudge == 0) {
 				DrawBox(0, 0, 640, 480, BLACK, TRUE);
 				SetFontSize(96);
 				while (1) {
-					if (tmpblack < tmpwhite) {
+					if (data.tmpblack < data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "白WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
+					}
+					else if (data.tmpblack > data.tmpwhite) {
+						SetFontSize(96);
+						DrawString(80, 80, "黒WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					else {
 						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "DRAW!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					if (CheckHitKey(KEY_INPUT_A) == 1) {
 						break;
@@ -205,7 +222,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			WaitKey();
 			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
 				boardInit();
-				winjudge = 0;
+				data.winjudge = 0;
 			}
 			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
 				break;
@@ -218,10 +235,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			boardInit();
 			while (gameEnd() == 0) {
 				boardPrintCPUlv1();
-				if (turn == -1) {
+				if (data.turn == -1) {
 					setStone();
 				}
-				else if (turn == 1) {
+				else if (data.turn == 1) {
 					CPU1_setStone();
 				}
 				passBottan();
@@ -233,27 +250,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					return 0;
 				}
 			}
-			if (winjudge == 0) {
+			if (data.winjudge == 0) {
 				DrawBox(0, 0, 640, 480, BLACK, TRUE);
 				SetFontSize(96);
 				while (1) {
-					if (tmpblack < tmpwhite) {
+					if (data.tmpblack < data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "白WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
-					else if (tmpblack > tmpwhite) {
+					else if (data.tmpblack > data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "黒WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					else {
 						SetFontSize(96);
-						DrawString(40, 80, "DRAW!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "DRAW!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					if (CheckHitKey(KEY_INPUT_A) == 1) {
 						break;
@@ -270,7 +287,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			WaitKey();
 			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
 				boardInit();
-				winjudge = 0;
+				data.winjudge = 0;
 			}
 			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
 				break;
@@ -283,10 +300,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			boardInit();
 			while (gameEnd() == 0) {
 				boardPrintCPUlv2();
-				if (turn == -1) {
+				if (data.turn == -1) {
 					setStone();
 				}
-				else if (turn == 1) {
+				else if (data.turn == 1) {
 					for (int i = 0; i < 10000; i++) {
 					}
 					CPU2_setStone();
@@ -300,27 +317,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					return 0;
 				}
 			}
-			if (winjudge == 0) {
+			if (data.winjudge == 0) {
 				DrawBox(0, 0, 640, 480, BLACK, TRUE);
 				SetFontSize(96);
 				while (1) {
-					if (tmpblack < tmpwhite) {
+					if (data.tmpblack < data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "白WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
-					else if (tmpblack > tmpwhite) {
+					else if (data.tmpblack > data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "黒WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					else {
 						SetFontSize(96);
-						DrawString(40, 80, "DRAW!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "DRAW!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					if (CheckHitKey(KEY_INPUT_A) == 1) {
 						break;
@@ -337,7 +354,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			WaitKey();
 			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
 				boardInit();
-				winjudge = 0;
+				data.winjudge = 0;
 			}
 			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
 				break;
@@ -350,10 +367,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			boardInit();
 			while (gameEnd() == 0) {
 				boardPrintCPUlv3();
-				if (turn == -1) {
+				if (data.turn == -1) {
 					setStone();
 				}
-				else if (turn == 1) {
+				else if (data.turn == 1) {
 					for (int i = 0; i < 10000; i++) {
 					}
 					CPU3_setStone();
@@ -367,27 +384,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					return 0;
 				}
 			}
-			if (winjudge == 0) {
+			if (data.winjudge == 0) {
 				DrawBox(0, 0, 640, 480, BLACK, TRUE);
 				SetFontSize(96);
 				while (1) {
-					if (tmpblack < tmpwhite) {
+					if (data.tmpblack < data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "白WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "白WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
-					else if (tmpblack > tmpwhite) {
+					else if (data.tmpblack > data.tmpwhite) {
 						SetFontSize(96);
-						DrawString(40, 80, "黒WIN!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "黒WIN!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					else {
 						SetFontSize(96);
-						DrawString(40, 80, "DRAW!!!", WHITE);
-						SetFontSize(48);
-						DrawString(20, 200, "SKIP　→→→　A", WHITE);
+						DrawString(80, 80, "DRAW!!!", WHITE);
+						SetFontSize(32);
+						DrawString(100, 200, "SKIP　→→→　A", WHITE);
 					}
 					if (CheckHitKey(KEY_INPUT_A) == 1) {
 						break;
@@ -404,7 +421,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			WaitKey();
 			if (CheckHitKey(KEY_INPUT_C) == 1) {	// 盤面を初期状態にリセット
 				boardInit();
-				winjudge = 0;
+				data.winjudge = 0;
 			}
 			else if (CheckHitKey(KEY_INPUT_E) || CheckHitKey(KEY_INPUT_ESCAPE) == 1) {
 				break;
@@ -420,27 +437,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 void boardInit() {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			stone[i][j] = 0;
+			data.stone[i][j] = 0;
 		}
 	}
-	endFlag = 0;
-	stone[3][3] = 1;
-	stone[4][4] = 1;
-	stone[3][4] = -1;
-	stone[4][3] = -1;
+	data.endFlag = 0;
+	data.stone[3][3] = 1;
+	data.stone[4][4] = 1;
+	data.stone[3][4] = -1;
+	data.stone[4][3] = -1;
 }
 
 void boardInitCPU() {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			stone[i][j] = 0;
+			data.stone[i][j] = 0;
 		}
 	}
-	endFlag = 0;
-	stone[3][3] = 1;
-	stone[4][4] = 1;
-	stone[3][4] = -1;
-	stone[4][3] = -1;
+	data.endFlag = 0;
+	data.stone[3][3] = 1;
+	data.stone[4][4] = 1;
+	data.stone[3][4] = -1;
+	data.stone[4][3] = -1;
 }
 
 // オセロ盤描画
@@ -532,10 +549,10 @@ void boardPrintCPUlv3() {
 void drawStone() {
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (stone[i][j] == 1) {
+			if (data.stone[i][j] == 1) {
 				DrawCircle(117 + (i * 58), 37 + (j * 58), 26, WHITE, TRUE);
 			}
-			else if (stone[i][j] == -1) {
+			else if (data.stone[i][j] == -1) {
 				DrawCircle(117 + (i * 58), 37 + (j * 58), 26, BLACK, TRUE);
 			}
 		}
@@ -545,9 +562,9 @@ void drawStone() {
 // 石配置判別
 // 1で置けて、0でそこには石を置くことができない
 int checkPosStone(int myX, int myY) {
-	int whichplayer = turn;
+	int whichplayer = data.turn;
 	int constantX = 0, constantY = 0;		//定数
-	count_stone = 0;
+	data.count_stone = 0;
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
@@ -569,8 +586,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX - 1][myY + constantY - 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX - 1][myY + constantY - 1] == 1) {
 								return 1;
 							}
 						}
@@ -578,7 +595,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX--, constantY--;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -587,8 +604,8 @@ int checkPosStone(int myX, int myY) {
 					k = myX - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX - 1][myY + constantY] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX - 1][myY + constantY] == 1) {
 								return 1;
 							}
 						}
@@ -596,7 +613,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX--;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -610,8 +627,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX - 1][myY + constantY + 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX - 1][myY + constantY + 1] == 1) {
 								return 1;
 							}
 						}
@@ -619,7 +636,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX--, constantY++;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -628,8 +645,8 @@ int checkPosStone(int myX, int myY) {
 					k = myY - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX][myY + constantY - 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX][myY + constantY - 1] == 1) {
 								return 1;
 							}
 						}
@@ -637,7 +654,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantY--;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -646,8 +663,8 @@ int checkPosStone(int myX, int myY) {
 					k = 6 - myY;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX][myY + constantY + 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX][myY + constantY + 1] == 1) {
 								return 1;
 							}
 						}
@@ -655,7 +672,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantY++;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -665,8 +682,8 @@ int checkPosStone(int myX, int myY) {
 					else k = myY - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX + 1][myY + constantY - 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX + 1][myY + constantY - 1] == 1) {
 								return 1;
 							}
 						}
@@ -674,7 +691,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX++, constantY--;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -683,8 +700,8 @@ int checkPosStone(int myX, int myY) {
 					k = 6 - myX;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX + 1][myY + constantY] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX + 1][myY + constantY] == 1) {
 								return 1;
 							}
 						}
@@ -692,7 +709,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX++;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 
@@ -706,8 +723,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX + 1][myY + constantY + 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX + 1][myY + constantY + 1] == 1) {
 								return 1;
 							}
 						}
@@ -715,7 +732,7 @@ int checkPosStone(int myX, int myY) {
 							break;
 						}
 						constantX++, constantY++;
-						count_stone++;
+						data.count_stone++;
 					}
 					break;
 				}
@@ -732,8 +749,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX - 1][myY + constantY - 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX - 1][myY + constantY - 1] == -1) {
 								return 1;
 							}
 						}
@@ -749,8 +766,8 @@ int checkPosStone(int myX, int myY) {
 					k = myX - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX - 1][myY + constantY] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX - 1][myY + constantY] == -1) {
 								return 1;
 							}
 						}
@@ -771,8 +788,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX - 1][myY + constantY + 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX - 1][myY + constantY + 1] == -1) {
 								return 1;
 							}
 						}
@@ -788,8 +805,8 @@ int checkPosStone(int myX, int myY) {
 					k = myY - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX][myY + constantY - 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX][myY + constantY - 1] == -1) {
 								return 1;
 							}
 						}
@@ -805,8 +822,8 @@ int checkPosStone(int myX, int myY) {
 					k = 6 - myY;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX][myY + constantY + 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX][myY + constantY + 1] == -1) {
 								return 1;
 							}
 						}
@@ -827,8 +844,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX + 1][myY + constantY - 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX + 1][myY + constantY - 1] == -1) {
 								return 1;
 							}
 						}
@@ -844,8 +861,8 @@ int checkPosStone(int myX, int myY) {
 					k = 6 - myX;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX + 1][myY + constantY] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX + 1][myY + constantY] == -1) {
 								return 1;
 							}
 						}
@@ -866,8 +883,8 @@ int checkPosStone(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX + 1][myY + constantY + 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX + 1][myY + constantY + 1] == -1) {
 								return 1;
 							}
 						}
@@ -891,7 +908,7 @@ int checkPosStone(int myX, int myY) {
 
 // 反転処理
 void Reverse(int myX, int myY) {
-	int whichplayer = turn;
+	int whichplayer = data.turn;
 	int constantX = 0, constantY = 0;		//定数
 
 	for (int i = 0; i < 3; i++) {		//3x3
@@ -914,14 +931,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX - 1][myY + constantY - 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX - 1][myY + constantY - 1] == 1) {
 								constantX = -1, constantY = -1;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantX--, constantY--;
 								}
 							}
@@ -938,14 +955,14 @@ void Reverse(int myX, int myY) {
 					k = myX - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX - 1][myY + constantY] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX - 1][myY + constantY] == 1) {
 								constantX = -1, constantY = 0;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantX--;
 								}
 							}
@@ -967,14 +984,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX - 1][myY + constantY + 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX - 1][myY + constantY + 1] == 1) {
 								constantX = -1, constantY = 1;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantX--, constantY++;
 								}
 							}
@@ -991,14 +1008,14 @@ void Reverse(int myX, int myY) {
 					k = myY - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX][myY + constantY - 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX][myY + constantY - 1] == 1) {
 								constantX = 0, constantY = -1;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantY--;
 								}
 							}
@@ -1015,14 +1032,14 @@ void Reverse(int myX, int myY) {
 					k = 6 - myY;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX][myY + constantY + 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX][myY + constantY + 1] == 1) {
 								constantX = 0, constantY = 1;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantY++;
 								}
 							}
@@ -1044,14 +1061,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX + 1][myY + constantY - 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX + 1][myY + constantY - 1] == 1) {
 								constantX = 1, constantY = -1;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantX++, constantY--;
 								}
 							}
@@ -1066,14 +1083,14 @@ void Reverse(int myX, int myY) {
 					k = 6 - myX;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX + 1][myY + constantY] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX + 1][myY + constantY] == 1) {
 								constantX = 1, constantY = 0;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantX++;
 								}
 							}
@@ -1093,14 +1110,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == -1) {
-							if (stone[myX + constantX + 1][myY + constantY + 1] == 1) {
+						if (data.stone[myX + constantX][myY + constantY] == -1) {
+							if (data.stone[myX + constantX + 1][myY + constantY + 1] == 1) {
 								constantX = 1, constantY = 1;
-								while (stone[myX + constantX][myY + constantY] == -1) {
+								while (data.stone[myX + constantX][myY + constantY] == -1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = 1;
+									data.stone[myX + constantX][myY + constantY] = 1;
 									constantX++, constantY++;
 								}
 							}
@@ -1125,14 +1142,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX - 1][myY + constantY - 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX - 1][myY + constantY - 1] == -1) {
 								constantX = -1, constantY = -1;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantX--, constantY--;
 								}
 							}
@@ -1149,14 +1166,14 @@ void Reverse(int myX, int myY) {
 					k = myX - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX - 1][myY + constantY] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX - 1][myY + constantY] == -1) {
 								constantX = -1, constantY = 0;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantX--;
 								}
 							}
@@ -1178,14 +1195,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX - 1][myY + constantY + 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX - 1][myY + constantY + 1] == -1) {
 								constantX = -1, constantY = 1;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantX--, constantY++;
 								}
 							}
@@ -1202,14 +1219,14 @@ void Reverse(int myX, int myY) {
 					k = myY - 1;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX][myY + constantY - 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX][myY + constantY - 1] == -1) {
 								constantX = 0, constantY = -1;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantY--;
 								}
 							}
@@ -1226,14 +1243,14 @@ void Reverse(int myX, int myY) {
 					k = 6 - myY;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX][myY + constantY + 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX][myY + constantY + 1] == -1) {
 								constantX = 0, constantY = 1;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantY++;
 								}
 							}
@@ -1255,14 +1272,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX + 1][myY + constantY - 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX + 1][myY + constantY - 1] == -1) {
 								constantX = 1, constantY = -1;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantX++, constantY--;
 								}
 							}
@@ -1279,14 +1296,14 @@ void Reverse(int myX, int myY) {
 					k = 6 - myX;
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX + 1][myY + constantY] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX + 1][myY + constantY] == -1) {
 								constantX = 1, constantY = 0;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantX++;
 								}
 							}
@@ -1308,14 +1325,14 @@ void Reverse(int myX, int myY) {
 					}
 					while (k > 0) {
 						k--;
-						if (stone[myX + constantX][myY + constantY] == 1) {
-							if (stone[myX + constantX + 1][myY + constantY + 1] == -1) {
+						if (data.stone[myX + constantX][myY + constantY] == 1) {
+							if (data.stone[myX + constantX + 1][myY + constantY + 1] == -1) {
 								constantX = 1, constantY = 1;
-								while (stone[myX + constantX][myY + constantY] == 1) {
+								while (data.stone[myX + constantX][myY + constantY] == 1) {
 									if ((myX + constantX) <= -1 || (myX + constantX) >= 8 || (myY + constantY) <= -1 || (myY + constantY) >= 8) {
 										break;
 									}
-									stone[myX + constantX][myY + constantY] = -1;
+									data.stone[myX + constantX][myY + constantY] = -1;
 									constantX++, constantY++;
 								}
 							}
@@ -1343,11 +1360,11 @@ void setStone() {
 			if (8 <= mouseY && mouseY <= 472) {
 				myX = (mouseX - 88) / 58;
 				myY = (mouseY - 8) / 58;
-				if (stone[myX][myY] == 0) {
+				if (data.stone[myX][myY] == 0) {
 					if (checkPosStone(myX, myY) == 1) {
-						stone[myX][myY] = turn;
+						data.stone[myX][myY] = data.turn;
 						Reverse(myX, myY);
-						turn *= -1;
+						data.turn *= -1;
 					}
 					else {
 						DrawString(20, 20, "そこに石は置けません", RED);
@@ -1367,12 +1384,12 @@ void setStoneCPU() {
 			if (8 <= mouseY && mouseY <= 472) {
 				myX = (mouseX - 88) / 58;
 				myY = (mouseY - 8) / 58;
-				if (stone[myX][myY] == 0) {
+				if (data.stone[myX][myY] == 0) {
 					if (checkPosStone(myX, myY) == 1) {
-						//stone[myX][myY] = turn;
-						stone[myX][myY] = 1;		//自分は白
+						//data.stone[myX][myY] = data.turn;
+						data.stone[myX][myY] = 1;		//自分は白
 						Reverse(myX, myY);
-						//turn *= -1;
+						//data.turn *= -1;
 					}
 					else {
 						DrawString(20, 20, "そこに石は置けません", RED);
@@ -1392,8 +1409,8 @@ void gameEndBottan() {
 		GetMousePoint(&mouseX, &mouseY);
 		if (5 <= mouseX && mouseX <= 75) {
 			if (220 <= mouseY && mouseY <= 340) {
-				endFlag = 1;
-				winjudge = 1;
+				data.endFlag = 1;
+				data.winjudge = 1;
 			}
 		}
 	}
@@ -1407,15 +1424,15 @@ void passBottan() {
 		GetMousePoint(&mouseX, &mouseY);
 		if (5 <= mouseX && mouseX <= 75) {
 			if (350 <= mouseY && mouseY <= 470) {
-				if (coolTimer == 0) {
-					turn *= -1;
+				if (data.coolTimer == 0) {
+					data.turn *= -1;
 				}
 			}
 		}
-		coolTimer = 1;
+		data.coolTimer = 1;
 	}
 	else {
-		coolTimer = 0;
+		data.coolTimer = 0;
 	}
 }
 
@@ -1424,10 +1441,10 @@ void CPU1_setStone() {		//1番多く取れるところに石を置く
 	int cpuX, cpuY;
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (stone[i][j] == 0) {
+			if (data.stone[i][j] == 0) {
 				if (checkPosStone(i, j) == 1) {
-					if (max < count_stone || (max == count_stone && GetRand(1) == 0)) {
-						max = count_stone;
+					if (max < data.count_stone || (max == data.count_stone && GetRand(1) == 0)) {
+						max = data.count_stone;
 						cpuX = i;
 						cpuY = j;
 					}
@@ -1435,9 +1452,9 @@ void CPU1_setStone() {		//1番多く取れるところに石を置く
 			}
 		}
 	}
-	stone[cpuX][cpuY] = turn;
+	data.stone[cpuX][cpuY] = data.turn;
 	Reverse(cpuX, cpuY);
-	turn *= -1;
+	data.turn *= -1;
 
 }
 
@@ -1446,10 +1463,10 @@ void CPU2_setStone() {		//1番少なく取れるところに石を置く
 	int cpuX, cpuY;
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (stone[i][j] == 0) {
+			if (data.stone[i][j] == 0) {
 				if (checkPosStone(i, j) == 1) {
-					if (min > count_stone || (min == count_stone && GetRand(1) == 0)) {
-						min = count_stone;
+					if (min > data.count_stone || (min == data.count_stone && GetRand(1) == 0)) {
+						min = data.count_stone;
 						cpuX = i;
 						cpuY = j;
 					}
@@ -1457,9 +1474,9 @@ void CPU2_setStone() {		//1番少なく取れるところに石を置く
 			}
 		}
 	}
-	stone[cpuX][cpuY] = turn;
+	data.stone[cpuX][cpuY] = data.turn;
 	Reverse(cpuX, cpuY);
-	turn *= -1;
+	data.turn *= -1;
 
 }
 
@@ -1468,10 +1485,10 @@ void CPU3_setStone() {		//優先度の高いところに置く
 	int cpuX, cpuY;
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (stone[i][j] == 0) {
+			if (data.stone[i][j] == 0) {
 				if (checkPosStone(i, j) == 1) {
-					if (tmp < stonelevel[i][j] || (tmp == stonelevel[i][j] && GetRand(1) == 0)) {
-						tmp = count_stone;
+					if (tmp < data.stonelevel[i][j] || (tmp == data.stonelevel[i][j] && GetRand(1) == 0)) {
+						tmp = data.count_stone;
 						cpuX = i;
 						cpuY = j;
 					}
@@ -1479,9 +1496,9 @@ void CPU3_setStone() {		//優先度の高いところに置く
 			}
 		}
 	}
-	stone[cpuX][cpuY] = turn;
+	data.stone[cpuX][cpuY] = data.turn;
 	Reverse(cpuX, cpuY);
-	turn *= -1;
+	data.turn *= -1;
 
 }
 
@@ -1493,18 +1510,18 @@ int gameEnd() {
 
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (stone[i][j] == 0) {
+			if (data.stone[i][j] == 0) {
 				greenField++;
 			}
-			else if (stone[i][j] == 1) {
+			else if (data.stone[i][j] == 1) {
 				whiteStone++;
 			}
-			else if (stone[i][j] == -1) {
+			else if (data.stone[i][j] == -1) {
 				brackStone++;
 			}
 		}
 	}
-	if (endFlag == 1) {
+	if (data.endFlag == 1) {
 		return 1;
 	}
 
@@ -1531,17 +1548,17 @@ void Display() {
 
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			if (stone[i][j] == -1) {
+			if (data.stone[i][j] == -1) {
 				blackcount++;
 			}
-			else if (stone[i][j] == 1) {
+			else if (data.stone[i][j] == 1) {
 				whitecount++;
 			}
 		}
 	}
 
 	DrawString(580, 25, "手番", WHITE);
-	if (turn == 1) {
+	if (data.turn == 1) {
 		DrawString(580, 45, "WHITE", WHITE);
 	}
 	else {
@@ -1550,8 +1567,8 @@ void Display() {
 
 	sprintf_s(BLACKBUFF, 128, "黒石 :%d", blackcount);
 	sprintf_s(WHITEBUFF, 128, "白石 :%d", whitecount);
-	tmpblack = blackcount;
-	tmpwhite = whitecount;
+	data.tmpblack = blackcount;
+	data.tmpwhite = whitecount;
 
 	DrawString(570, 320, BLACKBUFF, WHITE);
 	DrawString(570, 340, WHITEBUFF, WHITE);
@@ -1563,7 +1580,6 @@ void FileInput() {
 
 	char delim[] = ", ";
 	char* ctx;
-	char* ctx2;
 	char* p1;
 
 	int i = 0, j = 0;
@@ -1575,11 +1591,11 @@ void FileInput() {
 	else {
 		while (fgets(s, BUFFSIZE, fp) != NULL) {
 			p1 = strtok_s(s, delim, &ctx);
-			stonelevel[i][j] = atoi(p1);
+			data.stonelevel[i][j] = atoi(p1);
 			j++;
 			while (*ctx != NULL) {
 				p1 = strtok_s(NULL, delim, &ctx);
-				stonelevel[i][j] = atoi(p1);
+				data.stonelevel[i][j] = atoi(p1);
 				j++;
 			}
 			i++;
@@ -1588,7 +1604,7 @@ void FileInput() {
 		}
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
-				printf_s("%d", stonelevel[i][j]);
+				printf_s("%d", data.stonelevel[i][j]);
 			}
 		}
 		fclose(fp);
@@ -1606,12 +1622,12 @@ void FileOutput() {
 	else {
 
 		//txtファイルに表示
-		fprintf(fp, "黒石 : %d\n", tmpblack);
-		fprintf(fp, "白石 : %d\n", tmpwhite);
-		if (tmpblack > tmpwhite) {
+		fprintf(fp, "黒石 : %d\n", data.tmpblack);
+		fprintf(fp, "白石 : %d\n", data.tmpwhite);
+		if (data.tmpblack > data.tmpwhite) {
 			fputs("黒の勝ち!!!", fp);
 		}
-		else if (tmpblack < tmpwhite) {
+		else if (data.tmpblack < data.tmpwhite) {
 			fputs("白の勝ち!!!", fp);
 		}
 
