@@ -1375,32 +1375,6 @@ void setStone() {
 	}
 }
 
-void setStoneCPU() {
-	int mouseX, mouseY, myX, myY;
-	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)		//マウスの左ボタンをクリックしたら
-	{
-		GetMousePoint(&mouseX, &mouseY);
-		if (88 <= mouseX && mouseX <= 552) {
-			if (8 <= mouseY && mouseY <= 472) {
-				myX = (mouseX - 88) / 58;
-				myY = (mouseY - 8) / 58;
-				if (data.stone[myX][myY] == 0) {
-					if (checkPosStone(myX, myY) == 1) {
-						//data.stone[myX][myY] = data.turn;
-						data.stone[myX][myY] = 1;		//自分は白
-						Reverse(myX, myY);
-						//data.turn *= -1;
-					}
-					else {
-						DrawString(20, 20, "そこに石は置けません", RED);
-					}
-				}
-			}
-		}
-	}
-}
-
-
 // エンドボタン
 void gameEndBottan() {
 	int mouseX, mouseY;
@@ -1499,7 +1473,6 @@ void CPU3_setStone() {		//優先度の高いところに置く
 	data.stone[cpuX][cpuY] = data.turn;
 	Reverse(cpuX, cpuY);
 	data.turn *= -1;
-
 }
 
 
