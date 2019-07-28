@@ -1,6 +1,6 @@
 # c-project
 構造体
-struct Othello {
+	struct Othello {
 
 	int stone[8][8];
 	
@@ -18,8 +18,8 @@ struct Othello {
 	
 	int count_stone;		//反転する石の個数
 	
-};
+	};
 
-Othello data;
+	Othello data;
 
 ファイル入出力
