@@ -1,5 +1,6 @@
 # c-project
 構造体
+
 	struct Othello {
 
 	int stone[8][8];
