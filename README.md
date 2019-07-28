@@ -32,6 +32,19 @@
 
 iniフィル
 
+	[othello1]
+	endflag = 0
+	turn = -1
+	cooltimer = 0
+	winjudge = 0
+
+	[picture1]
+	p1 = taijin.png
+	p2 = cpu.png
+	p3 = cpualpha.png
+	p4 = cpubeta.png
+	p5 = othello.png
+
 
 
 	
