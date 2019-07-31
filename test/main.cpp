@@ -28,15 +28,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	getGurrentDirectory(currentDirectory);
 
 	char str[4][BUFFSIZE] = { "endflag", "turn", "cooltimer", "winjudge" };
-	data.endFlag = GetPrivateProfileInt("othello1", str[0], -10, "E:othellodata.ini");
-	data.turn = GetPrivateProfileInt("othello1", str[1], -10, "E:othellodata.ini");
-	data.coolTimer = GetPrivateProfileInt("othello1", str[2], -10, "E:othellodata.ini");
-	data.winjudge = GetPrivateProfileInt("othello1", str[3], -10, "E:othellodata.ini");
+	char dataFile[BUFFSIZE];
+	sprintf_s(dataFile, BUFFSIZE, "%s\\othellodata.ini", currentDirectory);
+	data.endFlag = GetPrivateProfileInt("othello1", str[0], -10, dataFile);
+	data.turn = GetPrivateProfileInt("othello1", str[1], -10, dataFile);
+	data.coolTimer = GetPrivateProfileInt("othello1", str[2], -10, dataFile);
+	data.winjudge = GetPrivateProfileInt("othello1", str[3], -10, dataFile);
 
 	char buff[5][BUFFSIZE];
 	char tmpdata[5][BUFFSIZE] = { "p1", "p2", "p3", "p4", "p5" };
 	for (int i = 0; i < 5; i++) {
-		GetPrivateProfileString("picture1", tmpdata[i], "none", buff[i], BUFFSIZE, "E:othellodata.ini");
+		GetPrivateProfileString("picture1", tmpdata[i], "none", buff[i], BUFFSIZE, "C:othellodata.ini");
 	}
 
 	ChangeWindowMode(TRUE);			// ウィンドウモードで起動する
